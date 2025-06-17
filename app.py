@@ -93,12 +93,6 @@ def main():
     st.markdown("""
     # 🎤 AI Voice BOT
     ## Using Mistral AI for Conversational AI
-    Ask questions like:
-    - "What should we know about your life story?"
-    - "What’s your #1 superpower?"
-    - "What are the top 3 areas you’d like to grow in?"
-    - "What misconception do your coworkers have about you?"
-    - "How do you push your boundaries and limits?"
     """)
 
     chat_container = st.container()
