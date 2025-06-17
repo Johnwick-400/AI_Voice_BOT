@@ -1,0 +1,8 @@
+streamlit==1.24.0
+streamlit-chat==0.1.1
+gTTS==2.3.2
+SpeechRecognition==3.10.0
+pygame==2.5.0
+requests==2.31.0
+python-dotenv==1.0.0
+watchdog==3.0.0
