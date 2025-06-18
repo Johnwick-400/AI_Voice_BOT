@@ -1,15 +1,15 @@
 import streamlit as st
 from streamlit_chat import message
 import speech_recognition as sr
-import os
-import requests
 import pyttsx3
+import requests
+from config import API_KEY, MODEL_NAME, API_URL
 
 class VoiceBot:
     def __init__(self):
-        self.api_key = "qUpn0MpfhwXIMGl2AdCN4CV9L2fIfWc4"
-        self.model_name = "mistral-small-latest"
-        self.api_url = "https://api.mistral.ai/v1/chat/completions"
+        self.api_key = API_KEY
+        self.model_name = MODEL_NAME
+        self.api_url = API_URL
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -23,7 +23,7 @@ class VoiceBot:
         messages = [{"role": "system", "content": self.persona}]
         messages.extend(self.conversation[-6:])
         messages.append({"role": "user", "content": question})
-        
+
         try:
             response = requests.post(
                 self.api_url,
@@ -31,7 +31,9 @@ class VoiceBot:
                 json={"model": self.model_name, "messages": messages}
             )
             response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"]
+            answer = response.json()["choices"][0]["message"]["content"]
+            self.conversation.append({"role": "assistant", "content": answer})
+            return answer
         except Exception as e:
             return f"Error: {str(e)}"
 
@@ -42,69 +44,56 @@ def init_session_state():
 def speak_text(text):
     try:
         engine = pyttsx3.init()
-        
-        # Set male voice if available
         voices = engine.getProperty('voices')
         for voice in voices:
             if "male" in voice.name.lower() or "english-us" in voice.name.lower():
                 engine.setProperty('voice', voice.id)
                 break
-        
-        engine.setProperty('rate', 170)  # Speed of speech
+        engine.setProperty('rate', 170)
         engine.say(text)
         engine.runAndWait()
     except Exception as e:
         st.error(f"Speech Error: {str(e)}")
 
 def main():
-    st.set_page_config(page_title="AI Voice BOT", page_icon="🤖", layout="wide")
-    
-    # Initialize session state
+    st.set_page_config(page_title="AI Voice BOT", page_icon="🎤", layout="wide")
+
     init_session_state()
-    
-    # Initialize bot
+
     if 'bot' not in st.session_state:
         st.session_state.bot = VoiceBot()
 
     st.title("🎤 AI Voice BOT")
     st.subheader("Using Mistral AI for Conversational AI")
 
-    # Chat display
     for i, msg in enumerate(st.session_state.bot.conversation):
         if msg["role"] == "user":
-            message(msg["content"], is_user=True, key=f"msg_{i}")
+            message(msg["content"], is_user=True, key=f"user_{i}")
         else:
-            message(msg["content"], is_user=False, key=f"msg_{i}")
+            message(msg["content"], is_user=False, key=f"bot_{i}")
 
-    # Voice input
-    if st.button("🎤 Start Voice Input", use_container_width=True):
+    if st.button("🎙️ Start Voice Input", use_container_width=True):
         recognizer = sr.Recognizer()
         try:
             with sr.Microphone() as source:
-                st.info("🎤 Listening... (speak within 5 seconds)")
+                st.info("🎧 Listening... (Speak now)")
                 audio = recognizer.listen(source, timeout=5)
                 question = recognizer.recognize_google(audio)
-                st.write("You said:", question)
-                
-                st.session_state.bot.conversation.append(
-                    {"role": "user", "content": question}
-                )
-                
-                with st.spinner('Processing...'):
+                st.write("🧑 You said:", question)
+
+                st.session_state.bot.conversation.append({"role": "user", "content": question})
+                with st.spinner('💬 Generating response...'):
                     response = st.session_state.bot.get_response(question)
-                    if response:
-                        st.session_state.bot.conversation.append(
-                            {"role": "assistant", "content": response}
-                        )
-                        st.markdown(response)
-                        speak_text(response)
-                        
+                    st.session_state.bot.conversation.append({"role": "assistant", "content": response})
+                    st.markdown(response)
+                    speak_text(response)
+
         except sr.UnknownValueError:
-            st.error("Could not understand audio")
+            st.error("Sorry, I couldn’t understand what you said.")
         except sr.RequestError:
-            st.error("Could not process audio")
+            st.error("Speech Recognition service unavailable.")
         except Exception as e:
-            st.error(f"Error: {str(e)}")
+            st.error(f"Unexpected Error: {str(e)}")
 
 if __name__ == "__main__":
     main()
