@@ -1,6 +1,6 @@
-streamlit==1.27.0
-streamlit-chat==0.1.1
-SpeechRecognition==3.10.0
-requests==2.31.0
-gTTS==2.3.2
-playsound==1.3.0
+streamlit
+streamlit-chat
+SpeechRecognition
+pyttsx3
+requests
+pyaudio
