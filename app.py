@@ -1,9 +1,9 @@
 import streamlit as st
 from streamlit_chat import message
 import speech_recognition as sr
-import os
 import requests
-import pyttsx3
+import platform
+import os
 
 class VoiceBot:
     def __init__(self):
@@ -23,7 +23,7 @@ class VoiceBot:
         messages = [{"role": "system", "content": self.persona}]
         messages.extend(self.conversation[-6:])
         messages.append({"role": "user", "content": question})
-        
+
         try:
             response = requests.post(
                 self.api_url,
@@ -40,69 +40,59 @@ def init_session_state():
         st.session_state.is_playing = False
 
 def speak_text(text):
-    try:
-        engine = pyttsx3.init()
-        
-        # Set male voice if available
-        voices = engine.getProperty('voices')
-        for voice in voices:
-            if "male" in voice.name.lower() or "english-us" in voice.name.lower():
-                engine.setProperty('voice', voice.id)
-                break
-        
-        engine.setProperty('rate', 170)  # Speed of speech
-        engine.say(text)
-        engine.runAndWait()
-    except Exception as e:
-        st.error(f"Speech Error: {str(e)}")
+    if "streamlit" in os.environ.get("HOME", "") or platform.system() == "Linux":
+        st.info("🧠 Response generated. TTS is disabled on Streamlit Cloud.")
+    else:
+        try:
+            import pyttsx3
+            engine = pyttsx3.init()
+            voices = engine.getProperty('voices')
+            for voice in voices:
+                if "male" in voice.name.lower() or "english" in voice.name.lower():
+                    engine.setProperty('voice', voice.id)
+                    break
+            engine.setProperty('rate', 170)
+            engine.say(text)
+            engine.runAndWait()
+        except Exception as e:
+            st.error(f"TTS Error: {str(e)}")
 
 def main():
     st.set_page_config(page_title="AI Voice BOT", page_icon="🤖", layout="wide")
-    
-    # Initialize session state
     init_session_state()
-    
-    # Initialize bot
+
     if 'bot' not in st.session_state:
         st.session_state.bot = VoiceBot()
 
     st.title("🎤 AI Voice BOT")
     st.subheader("Using Mistral AI for Conversational AI")
 
-    # Chat display
     for i, msg in enumerate(st.session_state.bot.conversation):
         if msg["role"] == "user":
             message(msg["content"], is_user=True, key=f"msg_{i}")
         else:
             message(msg["content"], is_user=False, key=f"msg_{i}")
 
-    # Voice input
     if st.button("🎤 Start Voice Input", use_container_width=True):
         recognizer = sr.Recognizer()
         try:
             with sr.Microphone() as source:
-                st.info("🎤 Listening... (speak within 5 seconds)")
+                st.info("🎙 Listening... speak within 5 seconds")
                 audio = recognizer.listen(source, timeout=5)
                 question = recognizer.recognize_google(audio)
                 st.write("You said:", question)
-                
-                st.session_state.bot.conversation.append(
-                    {"role": "user", "content": question}
-                )
-                
-                with st.spinner('Processing...'):
+
+                st.session_state.bot.conversation.append({"role": "user", "content": question})
+                with st.spinner("🧠 Thinking..."):
                     response = st.session_state.bot.get_response(question)
                     if response:
-                        st.session_state.bot.conversation.append(
-                            {"role": "assistant", "content": response}
-                        )
+                        st.session_state.bot.conversation.append({"role": "assistant", "content": response})
                         st.markdown(response)
                         speak_text(response)
-                        
         except sr.UnknownValueError:
-            st.error("Could not understand audio")
+            st.error("❌ Could not understand audio")
         except sr.RequestError:
-            st.error("Could not process audio")
+            st.error("🔌 API request failed")
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
