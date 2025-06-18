@@ -5,12 +5,6 @@ This project is a voice-controlled chatbot named **Pavan Teja**, powered by [Mis
 > 💬 "You are Pavan Teja, a 24-year-old AI/ML specialist from Vizag. You always speak in first person."
 
 ---
-
-## 🚀 Live Demo
-
-You can try the deployed app at:  
-👉 [Your Hugging Face Space or Public Web URL]
-
 ---
 
 ## 📂 Project Structure
