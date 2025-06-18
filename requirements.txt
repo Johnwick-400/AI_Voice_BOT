@@ -2,3 +2,4 @@ streamlit
 streamlit-chat
 SpeechRecognition
 requests
+pyttsx3
