@@ -1,6 +1,4 @@
 streamlit
 streamlit-chat
 SpeechRecognition
-pyttsx3
 requests
-pyaudio
