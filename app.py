@@ -1,10 +1,9 @@
 import streamlit as st
 from streamlit_chat import message
 import speech_recognition as sr
-import subprocess
 import os
 import requests
-from pathlib import Path
+import pyttsx3
 
 class VoiceBot:
     def __init__(self):
@@ -16,7 +15,8 @@ class VoiceBot:
             "Content-Type": "application/json"
         }
         self.persona = """You are Pavan Teja, a 24-year-old male AI/ML specialist from Vizag. 
-        Always respond in first person as Pavan."""
+        Always respond in first person as Pavan. When someone asks who you are, 
+        introduce yourself as Pavan Teja, never mention being an AI model."""
         self.conversation = []
 
     def get_response(self, question):
@@ -41,8 +41,18 @@ def init_session_state():
 
 def speak_text(text):
     try:
-        # Use say command directly on Mac
-        subprocess.run(['say', text])
+        engine = pyttsx3.init()
+        
+        # Set male voice if available
+        voices = engine.getProperty('voices')
+        for voice in voices:
+            if "male" in voice.name.lower() or "english-us" in voice.name.lower():
+                engine.setProperty('voice', voice.id)
+                break
+        
+        engine.setProperty('rate', 170)  # Speed of speech
+        engine.say(text)
+        engine.runAndWait()
     except Exception as e:
         st.error(f"Speech Error: {str(e)}")
 
